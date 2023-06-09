@@ -1,0 +1,692 @@
+@model PEI.ViewModels.DataCollectionSurveyVM
+
+ 
+
+@{
+    ViewBag.Title = "Data Collection Survey";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+ 
+
+ 
+
+ 
+
+
+@{
+
+ 
+
+    /*  ViewBag.PageHasErrors 
+                ViewBag.PageErrorCount 
+                ViewBag.PageErrorText  */
+
+ 
+
+
+    string input_id;
+    string itemInput_id;
+    long textarea_width;
+    string isChecked;  // "checked" or ""   for radio buttons and checkboxes 
+    long itemCount;
+    string textToShow; // used for textarea 
+    string label_text;
+
+ 
+
+    string returnToPage = ViewBag.ReturnPage;
+
+ 
+
+
+    Dictionary<string, object> htmlAttribs;
+
+ 
+
+
+}
+<script src="~/Scripts/DataCollection.js"></script>
+<script type="text/javascript">
+    function clearRadios(groupName) {
+        var r = document.getElementsByName(groupName);
+        for (var i = 0; i < r.length; i++) {
+            r[i].checked = false;
+        }
+    }
+    
+</script>
+
+ 
+
+ 
+
+
+@Html.Action("LoadTabs", "RegistrationTabs")
+
+ 
+
+<div class="container-fluid">
+
+ 
+
+
+    @using (Html.BeginForm("DataCollectionSurvey", "DataCollection", new { IdRegistration = Model.id_registration, IdTaskAndAlert = Model.id_task_and_alert, CdLang = Model.cd_lang, returnPage = returnToPage }, FormMethod.Post, new { @class = "form-horizontal formID", id = "frmDataColl", name = "frmDataColl", autocomplete = "off" }))
+    {
+
+ 
+
+        <input type="hidden" id="OriginalData" name="OriginalData" data-OriginalData="" />
+        <input type="hidden" id="passThrough" name="passThrough" value="" />
+        @Html.HiddenFor(Model => Model.ind_dirty)
+        @Html.HiddenFor(Model => Model.ind_readonly)
+        @Html.HiddenFor(Model => Model.cd_contract_status)
+
+ 
+
+ 
+
+        <div class="row pageTitle">
+            <div class="col-xs-8">
+                <h1>
+                    @Model.nm_survey &nbsp;
+                    @if (Model.migratedResults == "Y")
+                    {
+                        <span style="font-size:15px"> Answers on this page were migrated from the previously completed survey for the enrollment.</span>
+                    }
+                </h1>
+            </div>
+
+ 
+
+            <div class="col-xs-4 rightDiv">
+
+ 
+
+                @if (Model.ind_readonly == "True")
+                {
+                    <input type="button" value="Print" title="Print Data Collection Details" class="hidden-print btn btn-default  btn-small " onclick="window.print()" />
+
+ 
+
+
+                    if (returnToPage == "CWTALIST")
+                    {
+
+ 
+
+                        <input type="button" value="Close" title="Close Data Collection Details" class="btn btn-primary btn-small hidden-print" onclick="location.href='@Url.Action("TaskAndAlertList", "TaskAndAlert")'" />
+                    }
+                    else
+                    {
+                        <input type="button" value="Close" title="Close Data Collection Details" class="btn btn-primary btn-small hidden-print" onclick="location.href='@Url.Action("TaskAndAlertList", "TaskAndAlert", new { IdRegistration = Request.QueryString["IdRegistration"], forDataCollectionList = "Y" })'" />
+                    }
+
+ 
+
+                }
+                else if (Model.migratedResults == "Y")
+                {
+                    <input type="button" value="Close" title="Close Data Collection Details" class="btn btn-primary btn-small hidden-print" onclick="location.href='@Url.Action("TaskAndAlertList", "TaskAndAlert", new { IdRegistration = Request.QueryString["IdRegistration"], forDataCollectionList = "Y" })'" />
+                }
+                else
+                {
+                    <input type="button" value="Print" title="Print Data Collection Details" class="hidden-print btn btn-default  btn-small " onclick="window.print()" />
+
+ 
+
+                    if (returnToPage == "CWTALIST")
+                    {
+                        <input type="button" value="Cancel" title="Cancel Changes" class="btn btn-default btn-small hidden-print" onclick="SetSubmit();location.href='@Url.Action("TaskAndAlertList", "TaskAndAlert")'" />
+                    }
+                    else
+                    {
+                        <input type="button" value="Cancel" title="Cancel Changes" class="btn btn-default btn-small hidden-print" onclick="SetSubmit();location.href='@Url.Action("TaskAndAlertList", "TaskAndAlert", new { IdRegistration = Request.QueryString["IdRegistration"], forDataCollectionList = "Y" })'" />
+                    }
+                    <input type="submit" value="Save" title="Save Data Collection Details" class="btn btn-primary btn-small hidden-print " />
+                }
+
+ 
+
+
+            </div>
+
+ 
+
+        </div>
+        <div class="row">
+            <div class="col-xs-6"><strong>Assigned to Person: @Model.nm_registration_client</strong></div>
+            <div class="col-xs-6 rightDiv">* Required Field<br />&plusmn; Conditionally Required Field</div>
+
+ 
+
+
+        </div>
+
+ 
+
+ 
+
+ 
+
+        if (ViewBag.PageHasErrors == "true")
+        {
+            <div tabindex="-1" id="errorSummary" role="group">
+                <h2 class="errorSummaryHeading">
+                    <span class="fa fa-exclamation" aria-hidden="true" style="font-family: FontAwesome !important;"></span>
+                    <span class="adobeBlank" aria-hidden="true">Attention</span> Your information contains <span id="errorCount">@ViewBag.PageErrorCount</span> error(s)
+                </h2>
+                <ul class="errorSummaryList" id="ulErrorList">
+                    @Html.Raw(ViewBag.PageErrorText)
+                </ul>
+            </div>
+        }
+
+ 
+
+ 
+
+        @Html.HiddenFor(m => m.id_survey);
+        @Html.HiddenFor(m => m.id_survey_language);
+        @Html.HiddenFor(m => m.id_registration_client);
+        @Html.HiddenFor(m => m.id_registration_clent_survey);
+        @Html.HiddenFor(m => m.cd_lang);
+        @Html.HiddenFor(m => m.id_task_and_alert);
+        @Html.HiddenFor(m => m.id_registration);
+
+ 
+
+ 
+
+
+        foreach (var item in Model.DataCollectionItemList)
+        {
+
+ 
+
+            switch (item.cd_srvy_item_type)
+            {
+
+ 
+
+                case "HEADING":
+                    <div class="row">
+                        <div class="col-lg-12 col-xs-12 col-sm-12">
+                            <h2>@item.txt_srvy_item</h2>
+                        </div>
+                    </div>
+
+ 
+
+                    break;
+
+ 
+
+                case "DIVIDELINE":
+
+ 
+
+                    <div class="row">
+                        <div class="col-lg-12 col-xs-12 col-sm-12">
+                            &nbsp; <hr />
+                        </div>
+                    </div>
+
+ 
+
+                    break;
+
+ 
+
+                case "INSTR":
+                    <div class="row">
+                        <div class="col-lg-12 col-xs-12 col-sm-12">
+                            <em>@item.txt_srvy_item</em>
+                        </div>
+                    </div>
+
+ 
+
+                    break;
+
+ 
+
+                case "NOTE":
+
+ 
+
+
+                    input_id = item.id_survey_item.ToString();
+
+ 
+
+                    /*if (item.nbr_char > 0)
+                    {
+                        textarea_width = (item.nbr_char / item.nbr_row);
+                        if (textarea_width > 75)
+                        {
+                            textarea_width = 75;
+                        }
+                    }
+                    else
+                    {
+                        textarea_width = 50;
+                    }*/
+                    textarea_width = 100;
+
+ 
+
+
+                    <div class="row">
+                        <div class="col-lg-12 col-xs-12 col-sm-12">
+                            <label for="@input_id">
+                                @if (item.ind_reqrd == "Y")
+                                {<span>* </span>}@item.txt_srvy_item
+                            </label>
+
+ 
+
+                            <div class="input-group">
+                                @{
+                                    if (item.responseItems.Count > 0)
+                                    {
+
+ 
+
+                                        textToShow = item.responseItems.FirstOrDefault().txt_rspns_client;
+                                    }
+                                    else
+                                    {
+                                        textToShow = "";
+
+ 
+
+                                    }
+
+ 
+
+
+                                }
+                                <textarea name="@input_id" id="@input_id" cols="@textarea_width" rows="@item.nbr_row" maxlength=@item.nbr_char>@textToShow</textarea>
+                            </div>
+                            <label for="@input_id" class="error">@item.item_error_message</label>
+                        </div>
+
+ 
+
+
+                    </div>
+
+ 
+
+                    break;
+
+ 
+
+                case "SINGLESEL":
+                    // Radio Buttons
+                    input_id = item.id_survey_item.ToString();
+
+ 
+
+                    itemCount = 0;
+                    <div class="row">
+                        <div class="col-lg-12 col-xs-12 col-sm-12">
+                            @*<label id="lblDCQuestion">
+                                        @if (item.ind_reqrd == "Y")
+                                    { <span>* </span>}@item.txt_srvy_item
+                                </label>*@
+                            <fieldset>
+                                <legend>
+                                    <span id="lblDCQuestion_@input_id" class="legend_label">
+                                        @if (item.ind_reqrd == "Y")
+                                        {<span id="@input_id">* </span>}@item.txt_srvy_item
+                                    </span>
+                                </legend>
+                                <br />
+                                <div class="input-group">
+                                    @foreach (var itemResponse in item.responseItems)
+                                    {
+                                        itemInput_id = input_id + "_" + itemResponse.id_survey_item_response.ToString();
+
+ 
+
+                                        if (itemResponse.ind_selected == "Y")
+                                        {
+                                            isChecked = "checked";
+                                        }
+                                        else
+                                        {
+                                            isChecked = "";
+                                        }
+
+ 
+
+                                        /* if(itemCount == 7)
+                                         {
+                                             itemCount = 0;
+                                             <br />
+                                         }
+
+ 
+
+                                         itemCount = itemCount + 1;
+                                         */
+
+ 
+
+                                        <!--<div class="col-md-1">-->
+                                        <label for="@itemInput_id" class="radio-inline "><input type="radio" name="@input_id" id="@itemInput_id" aria-labelledby="lblDCQuestion_@input_id @itemInput_id" value="@itemResponse.id_survey_item_response" @isChecked /><strong>@itemResponse.txt_rspns</strong></label>
+                                        <!--</div>-->
+                                    }
+
+ 
+
+                                </div>
+                                <label for="@input_id" class="error">@item.item_error_message</label>
+
+ 
+
+                                @if (Model.ind_readonly != "True")
+                                {
+                                    <div><button type="button" onclick="javascript: clearRadios('@input_id');" class="hidden-print">Clear Selection</button></div>
+                                }
+                            </fieldset>
+                        </div>
+
+ 
+
+                    </div>
+
+ 
+
+                    break;
+
+ 
+
+                case "CHECKBOX":
+
+ 
+
+                    input_id = item.id_survey_item.ToString();
+                    <div class="row ">
+                        <div class="col-lg-12 col-xs-12 col-sm-12">
+                            <fieldset>
+                                <legend class="legend_label">
+                                    @if (item.ind_reqrd == "Y")
+                                    {<span>* </span>}@item.txt_srvy_item
+                                </legend>
+
+ 
+
+ 
+
+                                @foreach (var itemResponse in item.responseItems)
+                                {
+                                    itemInput_id = input_id + "_" + itemResponse.id_survey_item_response.ToString();
+
+ 
+
+                                    if (itemResponse.ind_selected == "Y")
+                                    {
+                                        isChecked = "checked";
+                                    }
+                                    else
+                                    {
+                                        isChecked = "";
+                                    }
+
+ 
+
+                                    <!--<div class="col-md-1">-->
+
+ 
+
+                                    <label for="@itemInput_id" class="checkbox-inline"><input type="checkbox" name="@itemInput_id" id="@itemInput_id" value="@itemResponse.id_survey_item_response" @isChecked /><strong>@itemResponse.txt_rspns</strong></label>
+                                    <!--</div>-->
+                                }
+
+ 
+
+
+                            </fieldset>
+                            <label for="@input_id" class="error">@item.item_error_message</label>
+                        </div>
+
+ 
+
+                    </div>
+
+ 
+
+                    break;
+
+ 
+
+                case "TEXT":
+
+ 
+
+                    input_id = item.id_survey_item.ToString();
+                    <div class="row col-lg-12 col-xs-12 col-sm-12">
+
+ 
+
+                        <label for="@input_id">
+                            @if (item.ind_reqrd == "Y")
+                            {<span>* </span>}
+                            @item.txt_srvy_item
+
+ 
+
+
+                        </label>
+                        <div class="input-group">
+                            <input type="text" name="@input_id" id="@input_id" maxlength="@item.nbr_char" value="@item.responseItems.FirstOrDefault().txt_rspns_client" />
+                        </div>
+
+ 
+
+                        <label for="@input_id" class="error">@item.item_error_message</label>
+                    </div>
+
+ 
+
+                    break;
+
+ 
+
+                   case "NUMERIC": 
+                              
+                    input_id = item.id_survey_item.ToString();
+                    <div class="row col-lg-12 col-xs-12 col-sm-12">
+
+ 
+
+                        <label for="@input_id">
+                            @if (item.ind_reqrd == "Y")
+                            {<span>* </span>}
+                            @item.txt_srvy_item
+                        </label>
+                        <div class="input-group">
+                            <input type="text" name="@input_id" id="@input_id" maxlength="@item.nbr_char" onkeypress="return isNumber(event)" value="@item.responseItems.FirstOrDefault().txt_rspns_client" />
+                           
+                        </div>
+                    </div>
+                    break;
+
+ 
+
+                    case "DATE":
+                         input_id = item.id_survey_item.ToString();
+                    <div class="row col-sm-2 col-lg-2">
+                        <label for="@input_id">
+                            @if (item.ind_reqrd == "Y")
+                            {<span>* </span>}@item.txt_srvy_item
+                        </label>
+
+ 
+
+                        <div class="input-group">
+
+ 
+
+ 
+
+ 
+
+
+                            @{
+                                htmlAttribs = new Dictionary<string, object>();
+                                htmlAttribs.Add("class", "form-control date-input");
+                                htmlAttribs.Add("placeholder", "MM/DD/YYYY");
+                                htmlAttribs.Add("data-placement", "top");
+                                htmlAttribs.Add("id", input_id);
+
+ 
+
+                                if (item.item_error_message == null)
+                                {
+                                    textToShow = String.Format("{0:MM/dd/yyyy}", item.responseItems.FirstOrDefault().dt_rspns);
+                                }
+                                else
+                                {
+                                    textToShow = item.txt_invalid_date;
+
+ 
+
+                                }
+
+ 
+
+
+                            }
+
+ 
+
+                            @Html.TextBox(input_id, textToShow, "{0:MM/dd/yyyy}", htmlAttribs)
+
+ 
+
+ 
+
+                        </div>
+                        <label for="@input_id" class="error">@item.item_error_message</label>
+                    </div>
+
+ 
+
+ 
+
+                    break;
+
+ 
+
+
+                case "SINGLESELDD":
+                    input_id = item.id_survey_item.ToString();
+                    <div class="row col-lg-12 col-xs-12 col-sm-12">
+                        <label for="@input_id">
+                            @if (item.ind_reqrd == "Y")
+                            {<span>* </span>}@item.txt_srvy_item
+                        </label>
+
+ 
+
+                        <br />
+                        <select name="@input_id" id="@input_id">
+
+ 
+
+                            <option value=""></option>
+
+ 
+
+                            @foreach (var itemResponse in item.responseItems)
+                            {
+                                itemInput_id = input_id + "_" + itemResponse.id_survey_item_response.ToString();
+
+ 
+
+                                if (itemResponse.ind_selected == "Y")
+                                {
+                                    isChecked = "selected";
+                                }
+                                else
+                                {
+                                    isChecked = "";
+                                }
+
+ 
+
+
+                                <option value="@itemResponse.id_survey_item_response" @isChecked>@itemResponse.txt_rspns</option>
+
+ 
+
+                            }
+
+ 
+
+
+                        </select>
+                        <br />
+                        <label for="@input_id" class="error">@item.item_error_message</label>
+                    </div>
+
+ 
+
+                    break;
+
+ 
+
+            }
+
+ 
+
+
+            <div class="row col-lg-12 col-xs-12 col-sm-12 ">&nbsp;</div>
+
+ 
+
+        }
+            <div class="row col-lg-12 col-xs-12 col-sm-12  hidden-print">
+                @if (Model.ind_readonly == "True")
+                {
+                    <input type="button" value="Print" title="Print Data Collection Details" class="hidden-print btn btn-default  btn-small " onclick="window.print()" />
+                    if (returnToPage == "CWTALIST")
+                    {
+
+ 
+
+                        <input type="button" value="Close" title="Close Data Collection Details" class="btn btn-primary btn-small hidden-print" onclick="location.href='@Url.Action("TaskAndAlertList", "TaskAndAlert")'" />
+                    }
+                    else
+                    {
+                        <input type="button" value="Close" title="Close Data Collection Details" class="btn btn-primary btn-small hidden-print" onclick="location.href='@Url.Action("TaskAndAlertList", "TaskAndAlert", new { IdRegistration = Request.QueryString["IdRegistration"], forDataCollectionList = "Y" })'" />
+                    }
+                }
+                else if (Model.migratedResults == "Y")
+                {
+                    <input type="button" value="Close" title="Close Data Collection Details" class="btn btn-primary btn-small hidden-print" onclick="location.href='@Url.Action("TaskAndAlertList", "TaskAndAlert", new { IdRegistration = Request.QueryString["IdRegistration"], forDataCollectionList = "Y" })'" />
+                }
+                else
+                {
+                    <input type="button" value="Print" title="Print Data Collection Details" class="hidden-print btn btn-default  btn-small " onclick="window.print()" />
+
+ 
+
+                    if (returnToPage == "CWTALIST")
+                    {
+                        <input type="button" value="Cancel" title="Cancel Changes" class="btn btn-default btn-small hidden-print" onclick="SetSubmit();location.href='@Url.Action("TaskAndAlertList", "TaskAndAlert")'" />
+                    }
+                    else
+                    {
+                        <input type="button" value="Cancel" title="Cancel Changes" class="btn btn-default btn-small hidden-print" onclick="SetSubmit();location.href='@Url.Action("TaskAndAlertList", "TaskAndAlert", new { IdRegistration = Request.QueryString["IdRegistration"], forDataCollectionList = "Y" })'" />
+                    }
+                    <input type="submit" value="Save" title="Save Data Collection Details" class="btn btn-primary btn-small hidden-print " />
+                }
+            </div>
+    } <!-- End form -->
+</div>
+ 
